@@ -6,6 +6,7 @@ pub mod handler;
 pub mod service;
 pub mod error;
 pub mod route;
+pub mod pagination;
 use sea_orm::{DatabaseConnection};
 use crate::{config::AppConfig, service::file_service, service::file_type_service};
 

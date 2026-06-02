@@ -1,9 +1,11 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
-use crate::{entity::file, handler::file_handler::FileQuery};
+
+use crate::entity::file;
+use crate::pagination::PaginationQuery;
 
 #[derive(Clone)]
-pub struct FileService{
+pub struct FileService {
     db: DatabaseConnection,
 }
 
@@ -11,53 +13,65 @@ impl FileService {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
-    pub async fn get_list(&self, req_query: FileQuery) -> Result<Vec<file::Model>, DbErr> {
+
+    pub async fn get_list(
+        &self,
+        search: Option<String>,
+        pagination: &PaginationQuery,
+    ) -> Result<(Vec<file::Model>, u64), sea_orm::DbErr> {
         let mut select = file::Entity::find();
 
-        if let Some(name) = req_query.search {
+        if let Some(name) = search {
             select = select.filter(file::Column::Name.contains(&name));
         }
 
-        select = select.order_by_desc(file::Column::Id);
+        let total = select
+            .clone()
+            .count(&self.db)
+            .await?;
 
-        if let Some(l) = req_query.limit {
-            select = select.limit(l);
-        }
+        let items = select
+            .order_by_desc(file::Column::Id)
+            .limit(pagination.per_page())
+            .offset(pagination.offset())
+            .all(&self.db)
+            .await?;
 
-        if let Some(o) = req_query.offset {
-            select = select.offset(o);
-        }
-
-        select.all(&self.db).await
+        Ok((items, total))
     }
 
-
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<file::Model>, DbErr> {
-        file::Entity::find()
-            .filter(file::Column::Id.eq(id))
+    pub async fn get_by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<file::Model>, sea_orm::DbErr> {
+        file::Entity::find_by_id(id)
             .one(&self.db)
             .await
     }
 
-    pub async fn delete_by_id(&self, id: Uuid) -> Result<(), DbErr> {
-        if let Some(file_model) = file::Entity::find()
-            .filter(file::Column::Id.eq(id))
-            .one(&self.db)
-            .await?
-        {
-            let active_model: file::ActiveModel = file_model.into();
-            active_model.delete(&self.db).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn get_absolute_path(&self, id: Uuid) -> Result<Option<String>, DbErr> {
-        println!("uuid: {}", id);
-        let file_opt = file::Entity::find()
-            .filter(file::Column::Id.eq(id))
+    pub async fn get_absolute_path(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<String>, sea_orm::DbErr> {
+        let file = file::Entity::find_by_id(id)
             .one(&self.db)
             .await?;
+        Ok(file.map(|f| f.path))
+    }
 
-        Ok(file_opt.map(|f| f.path))
+    pub async fn delete_by_id(&self, id: Uuid) -> Result<(), sea_orm::DbErr> {
+        let existing = file::Entity::find_by_id(id)
+            .one(&self.db)
+            .await?
+            .ok_or(sea_orm::DbErr::RecordNotFound(format!(
+                "file {} not found",
+                id
+            )))?;
+
+        let active_model: file::ActiveModel = existing.into();
+        file::Entity::delete(active_model)
+            .exec(&self.db)
+            .await?;
+        Ok(())
     }
 }
