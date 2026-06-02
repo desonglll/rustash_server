@@ -13,6 +13,7 @@ pub struct Model {
     pub path: String,
     pub file_size: String,
     pub file_type_id: i64,
+    pub storage_root_id: Uuid,
     #[sea_orm(
         belongs_to,
         from = "file_type_id",
@@ -21,6 +22,14 @@ pub struct Model {
         on_delete = "Cascade"
     )]
     pub file_type: HasOne<super::file_type::Entity>,
+    #[sea_orm(
+        belongs_to,
+        from = "storage_root_id",
+        to = "id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    pub storage_root: HasOne<super::storage_root::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

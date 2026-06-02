@@ -2,3 +2,4 @@
 
 pub use super::file::Entity as File;
 pub use super::file_type::Entity as FileType;
+pub use super::storage_root::Entity as StorageRoot;

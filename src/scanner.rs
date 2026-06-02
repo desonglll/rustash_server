@@ -15,6 +15,7 @@ struct DynamicExtensionRule {
 
 pub async fn scan_directory<P: AsRef<Path>>(
     db: &DatabaseConnection,
+    root: &entity::storage_root::Model,
     dir_path: P,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let raw_dir_path = dir_path.as_ref().to_string_lossy();
@@ -42,10 +43,10 @@ pub async fn scan_directory<P: AsRef<Path>>(
     let mut scan_rules: Vec<DynamicExtensionRule> = Vec::new();
     for t in all_types {
         let exts: Vec<String> = t.extensions
-            .split(',')
-            .map(|s| s.trim().to_lowercase())
-            .filter(|s| !s.is_empty())
-            .collect();
+                                 .split(',')
+                                 .map(|s| s.trim().to_lowercase())
+                                 .filter(|s| !s.is_empty())
+                                 .collect();
 
         scan_rules.push(DynamicExtensionRule {
             file_type_id: t.id,
@@ -83,6 +84,7 @@ pub async fn scan_directory<P: AsRef<Path>>(
                                 path: Set(absolute_path),
                                 file_size: Set(file_size_bytes.to_string()),
                                 file_type_id: Set(rule.file_type_id),
+                                storage_root_id: Set(root.id),
                             };
 
                             new_file.insert(db).await?;

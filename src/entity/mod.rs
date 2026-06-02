@@ -4,3 +4,4 @@ pub mod prelude;
 
 pub mod file;
 pub mod file_type;
+pub mod storage_root;
