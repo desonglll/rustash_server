@@ -14,6 +14,7 @@ pub struct Model {
     pub file_size: String,
     pub file_type_id: i64,
     pub storage_root_id: Uuid,
+    pub hash: Option<String>,
     #[sea_orm(
         belongs_to,
         from = "file_type_id",
