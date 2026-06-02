@@ -29,6 +29,13 @@ impl MigrationTrait for Migration {
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade)
                     )
+                    .col(uuid("storage_root_id"))
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_file_root")
+                            .from("file", "storage_root_id")
+                            .to("storage_root", "id")
+                    )
                     .to_owned(),
             )
             .await

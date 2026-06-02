@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20260602_104733_create_file_type_table;
 mod m20260602_104805_create_file_table;
+mod m20260602_140058_create_storage_root_table;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20260602_104733_create_file_type_table::Migration),
             Box::new(m20260602_104805_create_file_table::Migration),
+            Box::new(m20260602_140058_create_storage_root_table::Migration),
         ]
     }
 }
