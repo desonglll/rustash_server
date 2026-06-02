@@ -54,6 +54,8 @@ pub async fn scan_directory<P: AsRef<Path>>(
         });
     }
 
+    let mount_path = Path::new(&root.mount_path);
+
     println!("start scan directory: {:?}", dir_path);
 
     for entry in WalkDir::new(dir_path).into_iter().filter_map(|e| e.ok()) {
@@ -66,12 +68,16 @@ pub async fn scan_directory<P: AsRef<Path>>(
                 for rule in &scan_rules {
                     if rule.extensions.contains(&current_ext) {
 
-                        let absolute_path = path.to_string_lossy().to_string();
+                        let relative_path = path.strip_prefix(mount_path)
+                            .unwrap_or(path)
+                            .to_string_lossy()
+                            .to_string();
                         let file_name = path.file_name().unwrap().to_string_lossy().to_string();
                         let file_size_bytes = entry.metadata()?.len() as i64;
 
                         let exists = entity::file::Entity::find()
-                            .filter(entity::file::Column::Path.eq(&absolute_path))
+                            .filter(entity::file::Column::Path.eq(&relative_path))
+                            .filter(entity::file::Column::StorageRootId.eq(root.id))
                             .one(db)
                             .await?;
 
@@ -81,7 +87,7 @@ pub async fn scan_directory<P: AsRef<Path>>(
                             let new_file = entity::file::ActiveModel {
                                 id: Set(Uuid::new_v4()),
                                 name: Set(file_name.clone()),
-                                path: Set(absolute_path),
+                                path: Set(relative_path),
                                 file_size: Set(file_size_bytes.to_string()),
                                 file_type_id: Set(rule.file_type_id),
                                 storage_root_id: Set(root.id),
