@@ -1,0 +1,9 @@
+[server]
+port = 8080
+host = "127.0.0.1"
+
+[database]
+file_path = "stash.sqlite"
+
+[library]
+scan_directories = [ "/Users/shinoda/Movies" ]
