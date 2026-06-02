@@ -1,8 +1,9 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
+use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -34,9 +35,13 @@ impl From<crate::entity::file_type::Model> for FileTypeResponse {
     }
 }
 
-pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<FileTypeResponse>>, AppError> {
-    let items = state.file_type_service.list().await?;
-    Ok(Json(items.into_iter().map(FileTypeResponse::from).collect()))
+pub async fn list(
+    State(state): State<AppState>,
+    Query(pagination): Query<PaginationQuery>,
+) -> Result<Json<PaginatedResponse<FileTypeResponse>>, AppError> {
+    let (items, total) = state.file_type_service.list(&pagination).await?;
+    let data = items.into_iter().map(FileTypeResponse::from).collect();
+    Ok(Json(PaginatedResponse::new(data, total, &pagination)))
 }
 
 pub async fn get_by_id(

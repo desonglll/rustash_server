@@ -1,6 +1,7 @@
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryOrder, QuerySelect, Set};
 
 use crate::entity::file_type;
+use crate::pagination::PaginationQuery;
 
 #[derive(Clone)]
 pub struct FileTypeService {
@@ -12,11 +13,22 @@ impl FileTypeService {
         Self { db }
     }
 
-    pub async fn list(&self) -> Result<Vec<file_type::Model>, sea_orm::DbErr> {
-        file_type::Entity::find()
+    pub async fn list(
+        &self,
+        pagination: &PaginationQuery,
+    ) -> Result<(Vec<file_type::Model>, u64), sea_orm::DbErr> {
+        let total = file_type::Entity::find()
+            .count(&self.db)
+            .await?;
+
+        let items = file_type::Entity::find()
             .order_by_asc(file_type::Column::Id)
+            .limit(pagination.per_page())
+            .offset(pagination.offset())
             .all(&self.db)
-            .await
+            .await?;
+
+        Ok((items, total))
     }
 
     pub async fn get_by_id(
