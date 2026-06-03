@@ -1,10 +1,8 @@
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sha2::{Digest, Sha256};
 use std::io::Read;
 use std::path::Path;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
-};
-use sea_orm::ActiveValue::Set;
-use sha2::{Sha256, Digest};
 use uuid::Uuid;
 use walkdir::WalkDir;
 
@@ -60,11 +58,12 @@ pub async fn scan_directory<P: AsRef<Path>>(
 
     let mut scan_rules: Vec<DynamicExtensionRule> = Vec::new();
     for t in all_types {
-        let exts: Vec<String> = t.extensions
-                                 .split(',')
-                                 .map(|s| s.trim().to_lowercase())
-                                 .filter(|s| !s.is_empty())
-                                 .collect();
+        let exts: Vec<String> = t
+            .extensions
+            .split(',')
+            .map(|s| s.trim().to_lowercase())
+            .filter(|s| !s.is_empty())
+            .collect();
 
         scan_rules.push(DynamicExtensionRule {
             file_type_id: t.id,
@@ -85,8 +84,8 @@ pub async fn scan_directory<P: AsRef<Path>>(
 
                 for rule in &scan_rules {
                     if rule.extensions.contains(&current_ext) {
-
-                        let relative_path = path.strip_prefix(mount_path)
+                        let relative_path = path
+                            .strip_prefix(mount_path)
                             .unwrap_or(path)
                             .to_string_lossy()
                             .to_string();
@@ -102,8 +101,13 @@ pub async fn scan_directory<P: AsRef<Path>>(
                                 .await?;
 
                             if let Some(existing) = by_hash {
-                                if existing.path != relative_path || existing.storage_root_id != root.id {
-                                    println!("file moved, updating path [{}]: {} -> {}", existing.name, existing.path, relative_path);
+                                if existing.path != relative_path
+                                    || existing.storage_root_id != root.id
+                                {
+                                    println!(
+                                        "file moved, updating path [{}]: {} -> {}",
+                                        existing.name, existing.path, relative_path
+                                    );
                                     let mut active: entity::file::ActiveModel = existing.into();
                                     active.path = Set(relative_path);
                                     active.storage_root_id = Set(root.id);
@@ -133,7 +137,10 @@ pub async fn scan_directory<P: AsRef<Path>>(
                         }
 
                         // 3. New file
-                        println!("found new file [TypeID: {}]: {}", rule.file_type_id, file_name);
+                        println!(
+                            "found new file [TypeID: {}]: {}",
+                            rule.file_type_id, file_name
+                        );
 
                         let new_file = entity::file::ActiveModel {
                             id: Set(Uuid::new_v4()),

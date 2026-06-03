@@ -1,12 +1,12 @@
+use crate::AppState;
 use axum::{
+    Json,
     extract::{Path, State},
     http::{StatusCode, header},
     response::IntoResponse,
-    Json,
 };
 use tower_http::services::ServeFile;
 use uuid::Uuid;
-use crate::AppState;
 
 pub async fn stream_video(
     State(state): State<AppState>,
@@ -23,7 +23,10 @@ pub async fn stream_video(
                 ));
             }
 
-            match ServeFile::new(path).try_call(axum::http::Request::new(axum::body::Body::empty())).await {
+            match ServeFile::new(path)
+                .try_call(axum::http::Request::new(axum::body::Body::empty()))
+                .await
+            {
                 Ok(response) => {
                     let mut res = response.into_response();
                     res.headers_mut().insert(

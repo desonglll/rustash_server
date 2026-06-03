@@ -1,6 +1,6 @@
-use std::path::Path;
-use std::fs;
 use serde::*;
+use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -36,9 +36,11 @@ impl Default for AppConfig {
                 file_path: "stash.sqlite".to_string(),
             },
             library: LibraryConfig {
-                scan_directories: vec![
-                    if cfg!(target_os = "windows") { "C:\\Videos".to_string() } else { "$HOME/Movies".to_string() }
-                ],
+                scan_directories: vec![if cfg!(target_os = "windows") {
+                    "C:\\Videos".to_string()
+                } else {
+                    "$HOME/Movies".to_string()
+                }],
             },
         }
     }
