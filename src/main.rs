@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use rustash_server::route;
 use rustash_server::service::file_service;
 use rustash_server::service::file_type_service;
+use rustash_server::service::storage_root_service;
 use sea_orm::{Database};
 use rustash_server::{config::AppConfig};
 use migration::{Migrator, MigratorTrait};
@@ -24,8 +25,9 @@ async fn main() -> Result<(), AppError> {
 
     let file_service = file_service::FileService::new(db.clone());
     let file_type_service = file_type_service::FileTypeService::new(db.clone());
+    let storage_root_service = storage_root_service::StorageRootService::new(db.clone());
 
-    let state = AppState { db, config: app_config.clone(), file_service, file_type_service };
+    let state = AppState { db, config: app_config.clone(), file_service, file_type_service, storage_root_service };
     let app = route::create_routes(state);
 
 

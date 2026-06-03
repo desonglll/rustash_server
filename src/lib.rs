@@ -8,7 +8,7 @@ pub mod error;
 pub mod route;
 pub mod pagination;
 use sea_orm::{DatabaseConnection};
-use crate::{config::AppConfig, service::file_service, service::file_type_service};
+use crate::{config::AppConfig, service::file_service, service::file_type_service, service::storage_root_service};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -16,4 +16,5 @@ pub struct AppState {
     pub config: AppConfig,
     pub file_service: file_service::FileService,
     pub file_type_service: file_type_service::FileTypeService,
+    pub storage_root_service: storage_root_service::StorageRootService,
 }

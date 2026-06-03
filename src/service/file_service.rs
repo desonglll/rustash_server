@@ -1,7 +1,7 @@
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
-use crate::entity::file;
+use crate::entity::{file, storage_root};
 use crate::pagination::PaginationQuery;
 
 #[derive(Clone)]
@@ -56,7 +56,19 @@ impl FileService {
         let file = file::Entity::find_by_id(id)
             .one(&self.db)
             .await?;
-        Ok(file.map(|f| f.path))
+
+        match file {
+            Some(f) => {
+                let root = storage_root::Entity::find_by_id(f.storage_root_id)
+                    .one(&self.db)
+                    .await?;
+                match root {
+                    Some(r) => Ok(Some(format!("{}/{}", r.mount_path.trim_end_matches('/'), f.path.trim_start_matches('/')))),
+                    None => Ok(None),
+                }
+            }
+            None => Ok(None),
+        }
     }
 
     pub async fn delete_by_id(&self, id: Uuid) -> Result<(), sea_orm::DbErr> {
